@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+      font-family: Arial, sans-serif;
+      overflow:hidden;
+
+    }
+
+    .form-container {
+      width: 500px;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #333;
+    }
+
+    label {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    #questionEditor,
+    .ql-container {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: #fff;
+    }
+
+    .option-group {
+      margin-bottom: 10px;
+    }
+
+    .remove-option {
+      color: #ff0000;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    .add-option {
+      margin-top: 10px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+
+    #correctOption {
+      margin-top: 10px;
+      padding: 6px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    button[type="submit"] {
+      margin-top: 20px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+    .center-button {
+      text-align: center;
+    }
+
+    .wrapper {
+    height: 100vh;
+    overflow-y: scroll;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  
+  </style>
+  <title>Question</title>
+</head>
+
+<body>
+  <div class="wrapper">
+  <div class="form-container">
+    <h1>Question</h1>
+    <form id="examForm">
+      <label for="questionEditor">Question:<br><br></label>
+      <div id="questionEditor"></div>
+
+      <label for="optionsContainer"><br>Options:<br><br></label>
+      <div id="optionsContainer">
+        <div class="option-group">
+          <div class="ql-container"></div>
+          <span class="remove-option">Remove</span>
+        </div>
+      </div>
+      <button type="button" class="add-option">Add Option</button>
+
+      <label for="correctOption"><br>Correct Option:</label>
+      <input type="text" id="correctOption" placeholder="Enter the option number">
+      <br>
+      <div class="center-button">
+        <button type="submit">Submit</button>
+      </div>
+    </form>
+  </div>
+</div>
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    const optionsContainer = document.getElementById('optionsContainer');
+    const addOptionButton = document.querySelector('.add-option');
+    const examForm = document.getElementById('examForm');
+
+    // Initialize Quill editor for question
+    const questionEditor = new Quill('#questionEditor', {
+      theme: 'snow',
+      modules: {
+        toolbar: [
+          [{ header: [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          ['link', 'image'],
+          ['clean']
+        ]
+      }
+    });
+
+    function addOptionGroup() {
+      const optionGroup = document.createElement('div');
+      optionGroup.classList.add('option-group');
+      optionGroup.innerHTML = `
+        <div class="ql-container"></div>
+        <span class="remove-option">Remove</span>
+      `;
+      optionsContainer.appendChild(optionGroup);
+      const optionEditor = new Quill(optionGroup.querySelector('.ql-container'), {
+        theme: 'snow',
+        modules: {
+          toolbar: [
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            ['link', 'image'],
+            ['clean']
+          ]
+        }
+      });
+    }
+
+    // Add option group with Quill editor
+    // function addOptionGroup() {
+    //   const optionGroup = document.createElement('div');
+    //   optionGroup.classList.add('option-group');
+    //   optionGroup.innerHTML = `
+    //     <div class="ql-container"></div>
+    //     <span class="remove-option">Remove</span>
+    //   `;
+    //   optionsContainer.appendChild(optionGroup);
+    //   const optionEditor = new Quill(optionGroup.querySelector('.ql-container'), {
+    //     theme: 'snow',
+    //     modules: {
+    //       toolbar: [
+    //         ['bold', 'italic', 'underline', 'strike'],
+    //         [{ list: 'ordered' }, { list: 'bullet' }],
+    //         ['link', 'image'],
+    //         ['clean']
+    //       ]
+    //     }
+    //   });
+    // }
+
+    // Remove option group
+    function removeOptionGroup(event) {
+      const optionGroup = event.target.parentNode;
+      optionsContainer.removeChild(optionGroup);
+    }
+
+    // Add event listeners
+    addOptionButton.addEventListener('click', addOptionGroup);
+    optionsContainer.addEventListener('click', function (event) {
+      if (event.target.classList.contains('remove-option')) {
+        removeOptionGroup(event);
+      }
+    });
+
+    // Handle form submission
+    examForm.addEventListener('submit', function (event) {
+      event.preventDefault();
+      const question = questionEditor.root.innerHTML;
+      const options = Array.from(optionsContainer.querySelectorAll('.ql-container'))
+        .map(editor => editor.firstChild.innerHTML);
+      const correctOption = document.getElementById('correctOption').value;
+
+      axios.post('/submit', { question, options, correctOption })
+        .then(function (response) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: response.data.message
+          });
+        })
+        .catch(function (error) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: error.response.data.message
+          });
+        });
+    });
+  </script>
+</body>
+
+</html>
