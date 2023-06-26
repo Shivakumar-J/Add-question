@@ -26,7 +26,7 @@ connection.connect(function (err) {
 });
 
 // Serve the index.html file
-app.get('/add-question', function (req, res) {
+app.get('/', function (req, res) {
   res.sendFile(__dirname + '/index.html');
 });
 
